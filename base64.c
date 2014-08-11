@@ -1,46 +1,47 @@
 /* base64.c */
-/* 2013.01.10, 10RU004, Î‹´Ë‘¾ */
+/* 2013.01.10, 10RU004, çŸ³æ©‹ç¥¥å¤ª */
 
 #include "base64.h"
 
-/* ’è”éŒ¾ ƒfƒtƒHƒ‹ƒg: ƒIƒŠƒWƒiƒ‹‚Ì Privacy-Enhanced Mail (PEM) ‚Ì Base64 (RFC 1421, deprecated) */
-#define def_slong	64L		/* s‚ ‚½‚è‚Ì•¶š”(‰üs‚È‚µ‚Í LONG_MAX ‚Éİ’è) */
-#define base64_62	'+'		/* 63•¶š–Ú */
-#define base64_63	'/'		/* 64•¶š–Ú */
+/* å®šæ•°å®£è¨€ ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆ: ã‚ªãƒªã‚¸ãƒŠãƒ«ã® Privacy-Enhanced Mail (PEM) ã® Base64 (RFC 1421, deprecated) */
+#define def_slong	64L		/* è¡Œã‚ãŸã‚Šã®æ–‡å­—æ•°(æ”¹è¡Œãªã—ã¯ LONG_MAX ã«è¨­å®š) */
+#define base64_62	'+'		/* 63æ–‡å­—ç›® */
+#define base64_63	'/'		/* 64æ–‡å­—ç›® */
 
 char *c2b(const unsigned char *str, unsigned long size, unsigned char slong)
 {
-	/* char to base64 (ƒoƒCƒiƒŠ—ñ‚ğbase64—ñ‚Ö) */
+	/* char to base64 (ãƒã‚¤ãƒŠãƒªåˆ—ã‚’base64åˆ—ã¸) */
 	unsigned long cnt1, cnt2, cnt;
 	char *s = malloc(size * 7 / 5 + 4);
 
-	if (slong % 4 != 0) return s;
+	if (s == NULL) return NULL;
 
+	if (slong % 4 != 0) return s;	/* è¡Œã‚ãŸã‚Šã®æ–‡å­—æ•°ã¯å¿…ãš4ã®å€æ•°ã‚’æŒ‡å®š */
 	if (slong == 0) slong = def_slong;
 
 	for (cnt1 = cnt2 = 0; cnt1 < size; cnt1 += 3)
 	{
-		for (cnt = 0; cnt < 4; cnt++, cnt2++)	/* 6bit4•¶š‚¸‚Âˆ— */
+		for (cnt = 0; cnt < 4; cnt++, cnt2++)	/* 6bit4æ–‡å­—ãšã¤å‡¦ç† */
 		{
 			if (cnt1 + cnt < size + 1)
 			{
 				/* 8bit -> 6bit */
 				s[cnt2] = (str[cnt1 + cnt - 1] << 6 - cnt * 2 | str[cnt1 + cnt] >> cnt * 2 + 2) & 0x3f;
 
-				/* •ÏŠ·•\‚ğg‚Á‚Ä•ÏŠ· */
-				if ( 0 <= s[cnt2] && s[cnt2] <= 25) s[cnt2] += 'A' -  0;
-				if (26 <= s[cnt2] && s[cnt2] <= 51) s[cnt2] += 'a' - 26;
-				if (52 <= s[cnt2] && s[cnt2] <= 61) s[cnt2] += '0' - 52;
-				if (s[cnt2] == 62) s[cnt2] = base64_62;
-				if (s[cnt2] == 63) s[cnt2] = base64_63;
+				/* å¤‰æ›è¡¨ã‚’ä½¿ã£ã¦å¤‰æ› */
+				if (s[cnt2] <= 25) s[cnt2] += 'A';
+				else if (26 <= s[cnt2] && s[cnt2] <= 51) s[cnt2] += 'a' - 26;
+				else if (52 <= s[cnt2] && s[cnt2] <= 61) s[cnt2] += '0' - 52;
+				else if (s[cnt2] == 62) s[cnt2] = base64_62;
+				else s[cnt2] = base64_63;	/* å¿…ãš64æ–‡å­—ç›® */
 			}
-			else s[cnt2] = '=';	/* • ƒpƒ“ */
+			else s[cnt2] = '=';	/* è…¹ãƒ‘ãƒ³ */
 		}
 
 		if (cnt2 % (slong + 2) == slong)
 		{
-			s[cnt2++] = '\r';	/* ‰üs(CR) */
-			s[cnt2++] = '\n';	/* ‰üs(LF) */
+			s[cnt2++] = '\r';	/* æ”¹è¡Œ(CR) */
+			s[cnt2++] = '\n';	/* æ”¹è¡Œ(LF) */
 		}
 
 		s[cnt2] = '\0';
@@ -50,19 +51,19 @@ char *c2b(const unsigned char *str, unsigned long size, unsigned char slong)
 
 char *b2c(const unsigned char *str, unsigned long *size)
 {
-	/* base64 to char (base64—ñ‚ğƒoƒCƒiƒŠ—ñ‚Ö) */
+	/* base64 to char (base64åˆ—ã‚’ãƒã‚¤ãƒŠãƒªåˆ—ã¸) */
 	unsigned long cnt1, cnt2, cnt;
-	char *s = malloc(strlen(str));
+	char *s = malloc(strlen(str) * 5 / 7 + 1);
 
 	if (size != NULL) *size = 0;
 
 	for(cnt1 = cnt2 = 0; cnt1 < strlen(str); cnt1 += 4)
 	{
-		if (str[cnt1] == '\r' && str[cnt1 + 1] == '\n') cnt1 += 2;	/* ‰üs‚Í“Ç‚İ”ò‚Î‚µ */
+		if (str[cnt1] == '\r' && str[cnt1 + 1] == '\n') cnt1 += 2;	/* æ”¹è¡Œã¯èª­ã¿é£›ã°ã— */
 
-		for (cnt = cnt1; cnt < cnt1 + 4; cnt++)	/* 6bit4•¶š‚¸‚Âˆ— */
-			/* •ÏŠ·•\‚ğg‚Á‚Ä•ÏŠ· */
-			if (str[cnt] == '=') s[cnt] = 0;	/* • ƒpƒ“ */
+		for (cnt = cnt1; cnt < cnt1 + 4; cnt++)	/* 6bit4æ–‡å­—ãšã¤å‡¦ç† */
+			/* å¤‰æ›è¡¨ã‚’ä½¿ã£ã¦å¤‰æ› */
+			if (str[cnt] == '=') s[cnt] = 0;	/* è…¹ãƒ‘ãƒ³ */
 			else
 			{
 				if (size != NULL) (*size)++;
@@ -72,7 +73,7 @@ char *b2c(const unsigned char *str, unsigned long *size)
 				else if (str[cnt] == base64_62) s[cnt] = 62;
 				else if (str[cnt] == base64_63) s[cnt] = 63;
 				else
-				{	/* –¢’m‚Ì•¶š¬İ I—¹ */
+				{	/* æœªçŸ¥ã®æ–‡å­—æ··åœ¨ çµ‚äº† */
 					if (size != NULL) *size = 0;
 					free(s);
 					return NULL;
@@ -80,17 +81,18 @@ char *b2c(const unsigned char *str, unsigned long *size)
 			}
 
 		/* 6bit -> 8bit */
-		for (cnt = 0; cnt < 3; cnt++) s[cnt2++] = s[cnt1 + cnt] << cnt * 2 + 2 | s[cnt1 + cnt + 1] >> 4 - cnt * 2;
+		for (cnt = 0; cnt < 3; cnt++)
+			s[cnt2++] = s[cnt1 + cnt] << cnt * 2 + 2 | s[cnt1 + cnt + 1] >> 4 - cnt * 2;
 
 		s[cnt2] = '\0';
 	}
-	if (size != NULL) *size = *size * 3 / 4;
+	if (size != NULL) *size = cnt2;
 	return s;
 }
 
 char f2b(const char *infile, const char *outfile)
 {
-	/* flie to base64 (ƒtƒ@ƒCƒ‹‚ğbase64ƒtƒ@ƒCƒ‹‚Ö) */
+	/* flie to base64 (ãƒ•ã‚¡ã‚¤ãƒ«ã‚’base64ãƒ•ã‚¡ã‚¤ãƒ«ã¸) */
 	char *s, size;
 	unsigned char buffer[def_slong * 3 / 4];
 	FILE *fp1, *fp2;
@@ -112,7 +114,7 @@ char f2b(const char *infile, const char *outfile)
 
 char b2f(const char *infile, const char *outfile)
 {
-	/* base64 to flie (base64ƒtƒ@ƒCƒ‹‚ğƒtƒ@ƒCƒ‹‚Ö) */
+	/* base64 to flie (base64ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã¸) */
 	unsigned char *s;
 	char *t;
 	unsigned long u, size;
